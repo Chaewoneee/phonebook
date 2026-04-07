@@ -1,0 +1,26 @@
+# Phonebook Management System Implementation Tasks
+
+- [x] **Phase 1: Environment Setup**
+    - [x] Initialize Next.js project (`npx create-next-app@latest .`)
+    - [x] Install core dependencies (`@supabase/supabase-js`, `lucide-react`, `clsx`, `tailwind-merge`)
+    - [x] Configure `.env.local` template with Supabase and Encryption keys
+- [x] **Phase 2: Database & Security Layer**
+    - [x] Create `supabase_schema.sql` for `categories` and `contacts` (with RLS)
+    - [x] Initialize Supabase client (`utils/supabase/client.ts` and `server.ts`)
+    - [x] Implement Encryption Utility (`utils/crypto.ts`) using AES-256-GCM
+- [x] **Phase 3: Backend Logic (Server Actions)**
+    - [x] Implement Category CRUD actions (`addCategory`, `getCategories`, etc.)
+    - [x] Implement Contact CRUD actions with encryption/decryption (`addContact`, `getContacts`, etc.)
+- [x] **Phase 4: UI Components (Instagram Style)**
+    - [x] Build `Avatar` component (Circular with initials)
+    - [x] Build `CategoryBar` (Horizontal scrolling story-style filters)
+    - [x] Build `ContactCard` (Feed-style contact items)
+    - [x] Build `ContactForm` (Slide-up Bottom Sheet for mobile)
+    - [x] Build `BottomNav` (IG-style mobile navigation)
+- [x] **Phase 5: Page Integration**
+    - [x] Set up `app/layout.tsx` (Global navigation and theme)
+    - [x] Develop `app/page.tsx` (Main feed with search and filtering)
+- [/] **Phase 6: Refinement & Validation**
+    - [x] Implement partial match search (decrypt before filter)
+    - [ ] Verify Data Encryption at rest in Supabase (Requires DB access)
+    - [x] Ensure full responsiveness (Mobile-first IG look)
