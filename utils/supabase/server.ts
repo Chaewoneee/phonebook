@@ -1,25 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey;
 
 export async function createClientServer() {
   const cookieStore = await cookies();
   
   return createClient(supabaseUrl, supabaseAnonKey, {
     global: {
-      headers: {
-        // You might need to manually extract the session cookie if not using @supabase/ssr
-        // But for simplicity in this environment, we'll try to use the dev key first
-        // or expect the middleware to handle session refreshing.
-      }
+      headers: {}
     },
     auth: {
-      persistSession: false, // Don't persist on server
+      persistSession: false,
     }
   });
 }
 
-// Keep the old one for non-cookie contexts if needed, but rename it
-export const supabaseAdmin = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey);
+// Admin client for server actions
+export const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
