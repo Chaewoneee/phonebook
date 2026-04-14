@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Instagram, Lock, Mail, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
