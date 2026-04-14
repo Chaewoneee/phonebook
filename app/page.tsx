@@ -7,9 +7,9 @@ import ContactForm from '@/components/ContactForm';
 import BottomNav from '@/components/BottomNav';
 import { getCategories } from '@/app/actions/categories';
 import { getContacts, addContact, updateContact, deleteContact } from '@/app/actions/contacts';
-import { Search, Plus, Filter } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { signOut } from '@/app/actions/auth';
+import { supabase } from '@/utils/supabase/client';
+import { Search, Plus, Filter, LogOut } from 'lucide-react';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -28,14 +28,22 @@ export default function Home() {
   const [editingContact, setEditingContact] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('home');
 
-  // Load Data
+  // Load Data & Auth Check
   useEffect(() => {
     async function init() {
-      const cats = await getCategories();
-      const conts = await getContacts();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const token = session.access_token;
+      const cats = await getCategories(token);
+      const conts = await getContacts(token);
       setCategories(cats);
       setContacts(conts);
-      setLoading(loading => false);
+      setLoading(false);
     }
     init();
   }, []);
@@ -44,7 +52,9 @@ export default function Home() {
   const filteredContacts = useMemo(() => {
     let result = contacts;
     
-    if (selectedCategoryId) {
+    if (selectedCategoryId === 'uncategorized') {
+      result = result.filter(c => !c.category_id);
+    } else if (selectedCategoryId) {
       result = result.filter(c => c.category_id === selectedCategoryId);
     }
     
@@ -62,12 +72,16 @@ export default function Home() {
   // Actions
   const handleAddOrUpdate = async (data: any) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const token = session.access_token;
+
       const result = editingContact 
-        ? await updateContact(editingContact.id, data)
-        : await addContact(data);
+        ? await updateContact(token, editingContact.id, data)
+        : await addContact(token, data);
         
       if (result.success) {
-        const updatedContacts = await getContacts();
+        const updatedContacts = await getContacts(token);
         setContacts(updatedContacts);
       } else {
         alert(`실패: ${result.error}`);
@@ -80,7 +94,11 @@ export default function Home() {
 
   const handleDelete = async (id: string) => {
     if (confirm('정말로 삭제하시겠습니까?')) {
-      const result = await deleteContact(id);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const token = session.access_token;
+
+      const result = await deleteContact(token, id);
       if (result.success) {
         setContacts(contacts.filter(c => c.id !== id));
       }
@@ -95,6 +113,9 @@ export default function Home() {
           Phonegram
         </h1>
         <div className="flex items-center gap-4">
+          <button onClick={() => signOut()} className="text-gray-400 hover:text-red-500 transition-colors">
+            <LogOut className="w-5 h-5" />
+          </button>
           <button className="text-gray-900">
             <Plus onClick={() => setIsFormOpen(true)} className="w-6 h-6" />
           </button>

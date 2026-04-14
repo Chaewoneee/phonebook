@@ -1,13 +1,27 @@
 'use server';
 
-import { supabaseServer } from '@/utils/supabase/server';
+import { supabaseAdmin } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-export async function getCategories() {
-  const { data, error } = await supabaseServer
+async function getUserIdFromToken(token?: string) {
+  if (!token) return null;
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+  if (error || !user) {
+    console.error('Auth error:', error?.message);
+    return null;
+  }
+  return user.id;
+}
+
+export async function getCategories(token: string) {
+  const userId = await getUserIdFromToken(token);
+  if (!userId) return [];
+
+  const { data, error } = await supabaseAdmin
     .from('categories')
     .select('*')
-    .order('name');
+    .eq('user_id', userId)
+    .order('name', { ascending: true });
 
   if (error) {
     console.error('Error fetching categories:', error);
@@ -17,10 +31,13 @@ export async function getCategories() {
   return data;
 }
 
-export async function addCategory(name: string) {
-  const { data, error } = await supabaseServer
+export async function addCategory(token: string, name: string) {
+  const userId = await getUserIdFromToken(token);
+  if (!userId) return { success: false, error: 'User not authenticated' };
+
+  const { data, error } = await supabaseAdmin
     .from('categories')
-    .insert([{ name }])
+    .insert([{ name, user_id: userId }])
     .select();
 
   if (error) {
@@ -32,11 +49,15 @@ export async function addCategory(name: string) {
   return { success: true, data };
 }
 
-export async function updateCategory(id: string, name: string) {
-  const { data, error } = await supabaseServer
+export async function updateCategory(token: string, id: string, name: string) {
+  const userId = await getUserIdFromToken(token);
+  if (!userId) return { success: false, error: 'User not authenticated' };
+
+  const { data, error } = await supabaseAdmin
     .from('categories')
     .update({ name })
     .eq('id', id)
+    .eq('user_id', userId)
     .select();
 
   if (error) {
@@ -48,11 +69,15 @@ export async function updateCategory(id: string, name: string) {
   return { success: true, data };
 }
 
-export async function deleteCategory(id: string) {
-  const { error } = await supabaseServer
+export async function deleteCategory(token: string, id: string) {
+  const userId = await getUserIdFromToken(token);
+  if (!userId) return { success: false, error: 'User not authenticated' };
+
+  const { error } = await supabaseAdmin
     .from('categories')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', userId);
 
   if (error) {
     console.error('Error deleting category:', error);

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Plus, Check } from 'lucide-react';
 import { addCategory } from '@/app/actions/categories';
+import { supabase } from '@/utils/supabase/client';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -69,12 +70,34 @@ export default function ContactForm({
 
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return;
-    const result = await addCategory(newCategoryName);
-    if (result.success && result.data) {
-      setCategories([...categories, result.data[0]]);
-      setCategoryId(result.data[0].id);
-      setNewCategoryName('');
-      setIsAddingCategory(false);
+
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        alert(`세션 오류: ${sessionError.message}`);
+        return;
+      }
+      
+      if (!session) {
+        alert('로그인 세션이 없습니다. 다시 로그인해 주세요.');
+        window.location.href = '/login';
+        return;
+      }
+
+      const token = session.access_token;
+      const result = await addCategory(token, newCategoryName);
+      
+      if (result.success && result.data) {
+        setCategories([...categories, result.data[0]]);
+        setCategoryId(result.data[0].id);
+        setNewCategoryName('');
+        setIsAddingCategory(false);
+      } else {
+        alert(`카테고리 추가 실패: ${result.error || '알 수 없는 오류'}`);
+      }
+    } catch (err: any) {
+      alert(`시스템 오류: ${err.message || '알 수 없는 오류가 발생했습니다.'}`);
     }
   };
 

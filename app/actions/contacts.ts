@@ -1,16 +1,33 @@
 'use server';
 
-import { supabaseServer } from '@/utils/supabase/server';
+import { supabaseAdmin } from '@/utils/supabase/server';
 import { encrypt, decrypt } from '@/utils/crypto';
 import { revalidatePath } from 'next/cache';
 
-export async function getContacts(categoryId?: string) {
-  let query = supabaseServer
+async function getUserIdFromToken(token?: string) {
+  if (!token) return null;
+  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+  if (error || !user) {
+    console.error('Auth error:', error?.message);
+    return null;
+  }
+  return user.id;
+}
+
+export async function getContacts(token: string, categoryId?: string) {
+  const userId = await getUserIdFromToken(token);
+  if (!userId) {
+    console.warn('Unauthorized attempt to fetch contacts');
+    return [];
+  }
+
+  let query = supabaseAdmin
     .from('contacts')
     .select(`
       *,
       category:categories(id, name)
     `)
+    .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
   if (categoryId) {
@@ -32,19 +49,23 @@ export async function getContacts(categoryId?: string) {
   }));
 }
 
-export async function addContact(formData: {
+export async function addContact(token: string, formData: {
   name: string;
   phone: string;
   category_id?: string;
   memo?: string;
 }) {
   try {
+    const userId = await getUserIdFromToken(token);
+    if (!userId) return { success: false, error: 'User not authenticated' };
+
     const { name, phone, category_id, memo } = formData;
 
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabaseAdmin
       .from('contacts')
       .insert([
         {
+          user_id: userId,
           name: encrypt(name),
           phone: encrypt(phone),
           category_id: category_id || null,
@@ -66,15 +87,18 @@ export async function addContact(formData: {
   }
 }
 
-export async function updateContact(id: string, formData: {
+export async function updateContact(token: string, id: string, formData: {
   name: string;
   phone: string;
   category_id?: string;
   memo?: string;
 }) {
+  const userId = await getUserIdFromToken(token);
+  if (!userId) return { success: false, error: 'User not authenticated' };
+
   const { name, phone, category_id, memo } = formData;
 
-  const { data, error } = await supabaseServer
+  const { data, error } = await supabaseAdmin
     .from('contacts')
     .update({
       name: encrypt(name),
@@ -83,6 +107,7 @@ export async function updateContact(id: string, formData: {
       memo: memo || '',
     })
     .eq('id', id)
+    .eq('user_id', userId)
     .select();
 
   if (error) {
@@ -94,11 +119,15 @@ export async function updateContact(id: string, formData: {
   return { success: true, data };
 }
 
-export async function deleteContact(id: string) {
-  const { error } = await supabaseServer
+export async function deleteContact(token: string, id: string) {
+  const userId = await getUserIdFromToken(token);
+  if (!userId) return { success: false, error: 'User not authenticated' };
+
+  const { error } = await supabaseAdmin
     .from('contacts')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', userId);
 
   if (error) {
     console.error('Error deleting contact:', error);

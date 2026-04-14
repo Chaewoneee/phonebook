@@ -51,6 +51,33 @@ export default function CategoryBar({
         </span>
       </button>
 
+      {/* Uncategorized Category */}
+      <button
+        onClick={() => onSelect('uncategorized')}
+        className="flex flex-col items-center gap-1 flex-shrink-0 group"
+      >
+        <div
+          className={cn(
+            'w-16 h-16 rounded-full p-[2px] flex items-center justify-center border-2 transition-all',
+            selectedId === 'uncategorized'
+              ? 'border-pink-500 bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600'
+              : 'border-gray-200 group-hover:border-gray-300'
+          )}
+        >
+          <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-xs font-bold text-gray-800 italic">
+            None
+          </div>
+        </div>
+        <span
+          className={cn(
+            'text-[10px] font-medium transition-colors',
+            selectedId === 'uncategorized' ? 'text-gray-900 font-semibold' : 'text-gray-500'
+          )}
+        >
+          미분류
+        </span>
+      </button>
+
       {categories.map((category) => (
         <button
           key={category.id}
