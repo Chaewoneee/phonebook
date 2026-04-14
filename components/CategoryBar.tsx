@@ -7,10 +7,7 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-interface Category {
-  id: string;
-  name: string;
-}
+import { Category } from '@/types';
 
 interface CategoryBarProps {
   categories: Category[];

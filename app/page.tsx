@@ -9,7 +9,10 @@ import { getCategories } from '@/app/actions/categories';
 import { getContacts, addContact, updateContact, deleteContact } from '@/app/actions/contacts';
 import { signOut } from '@/app/actions/auth';
 import { supabase } from '@/utils/supabase/client';
-import { Search, Plus, Filter, LogOut } from 'lucide-react';
+import { Search, Plus, LogOut } from 'lucide-react';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+import { Contact, Category, ContactFormData } from '@/types';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -17,15 +20,15 @@ function cn(...inputs: ClassValue[]) {
 
 export default function Home() {
   // Data State
-  const [categories, setCategories] = useState<any[]>([]);
-  const [contacts, setContacts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
 
   // UI State
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingContact, setEditingContact] = useState<any>(null);
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [activeTab, setActiveTab] = useState('home');
 
   // Load Data & Auth Check
@@ -70,7 +73,7 @@ export default function Home() {
   }, [contacts, selectedCategoryId, searchQuery]);
 
   // Actions
-  const handleAddOrUpdate = async (data: any) => {
+  const handleAddOrUpdate = async (data: ContactFormData) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;

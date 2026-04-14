@@ -10,14 +10,10 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+import { Contact } from '@/types';
+
 interface ContactCardProps {
-  contact: {
-    id: string;
-    name: string;
-    phone: string;
-    category?: { name: string };
-    memo?: string;
-  };
+  contact: Contact;
   onEdit: () => void;
   onDelete: () => void;
 }

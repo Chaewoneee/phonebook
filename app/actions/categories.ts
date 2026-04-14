@@ -2,8 +2,9 @@
 
 import { supabaseAdmin } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { Category, ActionResponse } from '@/types';
 
-async function getUserIdFromToken(token?: string) {
+async function getUserIdFromToken(token?: string): Promise<string | null> {
   if (!token) return null;
   const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
   if (error || !user) {
@@ -13,7 +14,7 @@ async function getUserIdFromToken(token?: string) {
   return user.id;
 }
 
-export async function getCategories(token: string) {
+export async function getCategories(token: string): Promise<Category[]> {
   const userId = await getUserIdFromToken(token);
   if (!userId) return [];
 
@@ -28,10 +29,10 @@ export async function getCategories(token: string) {
     return [];
   }
 
-  return data;
+  return data || [];
 }
 
-export async function addCategory(token: string, name: string) {
+export async function addCategory(token: string, name: string): Promise<ActionResponse<Category[]>> {
   const userId = await getUserIdFromToken(token);
   if (!userId) return { success: false, error: 'User not authenticated' };
 
@@ -46,10 +47,10 @@ export async function addCategory(token: string, name: string) {
   }
 
   revalidatePath('/');
-  return { success: true, data };
+  return { success: true, data: data || [] };
 }
 
-export async function updateCategory(token: string, id: string, name: string) {
+export async function updateCategory(token: string, id: string, name: string): Promise<ActionResponse<Category[]>> {
   const userId = await getUserIdFromToken(token);
   if (!userId) return { success: false, error: 'User not authenticated' };
 
@@ -66,10 +67,10 @@ export async function updateCategory(token: string, id: string, name: string) {
   }
 
   revalidatePath('/');
-  return { success: true, data };
+  return { success: true, data: data || [] };
 }
 
-export async function deleteCategory(token: string, id: string) {
+export async function deleteCategory(token: string, id: string): Promise<ActionResponse> {
   const userId = await getUserIdFromToken(token);
   if (!userId) return { success: false, error: 'User not authenticated' };
 

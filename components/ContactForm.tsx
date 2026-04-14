@@ -6,32 +6,17 @@ import { addCategory } from '@/app/actions/categories';
 import { supabase } from '@/utils/supabase/client';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { Category, Contact, ContactFormData } from '@/types';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-interface Category {
-  id: string;
-  name: string;
-}
-
 interface ContactFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: {
-    name: string;
-    phone: string;
-    category_id?: string;
-    memo?: string;
-  }) => void;
-  initialData?: {
-    id?: string;
-    name: string;
-    phone: string;
-    category_id?: string;
-    memo?: string;
-  };
+  onSubmit: (data: ContactFormData) => void;
+  initialData?: Contact | null;
   categories: Category[];
 }
 
@@ -48,7 +33,8 @@ export default function ContactForm({
   const [memo, setMemo] = useState(initialData?.memo || '');
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [categories, setCategories] = useState(initialCategories);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [isCategoryLoading, setIsCategoryLoading] = useState(false);
 
   useEffect(() => {
     if (initialData) {

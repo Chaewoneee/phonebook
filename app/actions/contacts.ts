@@ -3,8 +3,9 @@
 import { supabaseAdmin } from '@/utils/supabase/server';
 import { encrypt, decrypt } from '@/utils/crypto';
 import { revalidatePath } from 'next/cache';
+import { Contact, ActionResponse, ContactFormData } from '@/types';
 
-async function getUserIdFromToken(token?: string) {
+async function getUserIdFromToken(token?: string): Promise<string | null> {
   if (!token) return null;
   const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
   if (error || !user) {
@@ -14,7 +15,7 @@ async function getUserIdFromToken(token?: string) {
   return user.id;
 }
 
-export async function getContacts(token: string, categoryId?: string) {
+export async function getContacts(token: string, categoryId?: string): Promise<Contact[]> {
   const userId = await getUserIdFromToken(token);
   if (!userId) {
     console.warn('Unauthorized attempt to fetch contacts');
@@ -41,20 +42,17 @@ export async function getContacts(token: string, categoryId?: string) {
     return [];
   }
 
+  if (!data) return [];
+
   // Decrypt name and phone for each contact
-  return data.map(contact => ({
+  return data.map((contact: any) => ({
     ...contact,
     name: decrypt(contact.name),
     phone: decrypt(contact.phone),
   }));
 }
 
-export async function addContact(token: string, formData: {
-  name: string;
-  phone: string;
-  category_id?: string;
-  memo?: string;
-}) {
+export async function addContact(token: string, formData: ContactFormData): Promise<ActionResponse<Contact[]>> {
   try {
     const userId = await getUserIdFromToken(token);
     if (!userId) return { success: false, error: 'User not authenticated' };
@@ -80,19 +78,14 @@ export async function addContact(token: string, formData: {
     }
 
     revalidatePath('/');
-    return { success: true, data };
+    return { success: true, data: data || [] };
   } catch (error: any) {
     console.error('Error adding contact:', error.message);
     return { success: false, error: error.message || '암호화 또는 통신 중 오류가 발생했습니다.' };
   }
 }
 
-export async function updateContact(token: string, id: string, formData: {
-  name: string;
-  phone: string;
-  category_id?: string;
-  memo?: string;
-}) {
+export async function updateContact(token: string, id: string, formData: ContactFormData): Promise<ActionResponse<Contact[]>> {
   const userId = await getUserIdFromToken(token);
   if (!userId) return { success: false, error: 'User not authenticated' };
 
@@ -116,10 +109,10 @@ export async function updateContact(token: string, id: string, formData: {
   }
 
   revalidatePath('/');
-  return { success: true, data };
+  return { success: true, data: data || [] };
 }
 
-export async function deleteContact(token: string, id: string) {
+export async function deleteContact(token: string, id: string): Promise<ActionResponse> {
   const userId = await getUserIdFromToken(token);
   if (!userId) return { success: false, error: 'User not authenticated' };
 
